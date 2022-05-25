@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Collections.Generic;
 using apiprueba.Dtos;
+using apiprueba.Dtos.User;
+using apiprueba.Dtos.Telefono;
 
 namespace apiprueba.Repository
 {
@@ -26,12 +28,12 @@ namespace apiprueba.Repository
             return user;
         }
 
-        public async Task<List<User>> GetAllUSer()
+        public async Task<User> GetAllUSer()
         {
             var users = await _context.Users
             .Include(u => u.Nacimientos)
             .Include(u => u.Telofonos)
-            .ToListAsync();
+            .FirstOrDefaultAsync();
 
             return users;
         }
@@ -66,5 +68,50 @@ namespace apiprueba.Repository
 
             return user1 ;
         }
+
+        public async Task<List<User>> GetUserForAge()
+        {
+            var users = await _context.UserRols
+            .Include(u => u.User)
+            .ThenInclude(u => u.Telofonos)
+            .Where(u => u.RolId == 6 || u.RolId == 8)
+            .ToListAsync();
+
+            users = users.Where(u => u.User.Edad1 > 19 && u.User.Edad1 < 41).ToList();
+            users = users.Where(u => u.User.Telofonos.Any(t => t.CodigoDePais > 300 && t.CodigoDePais < 500)).ToList();
+
+            return users.Select(u => u.User).ToList();
+        }
+
+        public async Task<List<UserPhoneDto>> GetUSerForDto(int userId)
+        {
+            var usersReturn = new List<UserPhoneDto>();
+
+            var users = await _context.Users.Include(u => u.Telofonos).ToListAsync();
+            foreach(var i in users)
+            {
+                var telefonosuer = new List<PhoneDto>();
+                foreach (var n in i.Telofonos)
+                {
+                    var tel = new PhoneDto()
+                    {
+                        Numero = n.Numero,
+                        Codigo = n.CodigoDePais
+                    };
+                    telefonosuer.Add(tel);
+                }
+                var user = new UserPhoneDto()
+                {
+                    UserId = i.Id,
+                    Nombre = i.Name,
+                    phones = telefonosuer
+                };
+                usersReturn.Add(user);
+            }
+
+            return usersReturn;
+        }
+
+
     }
 }

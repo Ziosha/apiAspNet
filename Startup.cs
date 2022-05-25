@@ -65,6 +65,7 @@ namespace apiprueba
 
         void CargarRepositorio(IServiceCollection services)
         {
+            // services.AddScoped<ILogger>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRolsRepository, RolsRepository>();
         }
